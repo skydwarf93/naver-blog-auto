@@ -1,0 +1,12 @@
+import { chromium } from "playwright";
+import { z } from "zod";
+import { runClaude, runClaudeJson } from "@/lib/claude";
+const img = "/tmp/claude-0/-home-user/6dd7ced7-7372-559f-967c-6988eab9e76b/scratchpad/vision-test.png";
+const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 400, height: 300 } });
+await p.setContent('<body style="margin:0;background:#cde"><div style="position:absolute;left:120px;top:60px;width:160px;height:160px;border-radius:50%;background:#e22"></div><div style="position:absolute;left:40px;top:20px;width:60px;height:60px;background:#2a2"></div></body>');
+await p.screenshot({ path: img }); await b.close();
+const long = "다음 글을 읽고 마지막 문장에 나오는 과일 이름만 답하라.\n" + "오늘은 날씨가 맑고 바람이 선선해서 산책하기 좋은 날이었다. \"따옴표\" '작은따옴표' $변수 `백틱` & | ; 같은 특수문자도 섞여 있다. ".repeat(25) + "\n마지막 문장: 나는 귤을 좋아한다.";
+console.log("prompt length", long.length);
+const r1 = await runClaude(long); console.log("long:", r1.ok ? r1.text.trim().slice(0, 40) : r1.error);
+const r2 = await runClaudeJson("첨부 이미지에서 원의 색과 사각형의 색을 한국어로. 출력: {\"circle\":\"..\",\"square\":\"..\"}", z.object({ circle: z.string(), square: z.string() }), { images: [img] });
+console.log("vision(project 밖 경로):", JSON.stringify(r2));
