@@ -28,6 +28,9 @@ export interface PublishInput {
   blogId?: string;
   /** 테스트 전용: 브라우저를 닫기 직전에 화면 상태를 검사한다 */
   inspect?: (page: Page) => Promise<void>;
+  /** 임시저장 성공 후 창을 닫지 않고 사용자가 닫을 때까지 둔다(사용자 요청). 최대 대기 ms (기본 2시간) */
+  keepOpenAfterSave?: boolean;
+  keepOpenMaxMs?: number;
 }
 export interface PublishResult {
   status: "published" | "dry_run" | "draft_saved" | "failed" | "blocked";
@@ -452,6 +455,7 @@ export async function publishToNaver(input: PublishInput): Promise<PublishResult
   const { browser, context } = await newContext({ headless: input.headless, useNaverSession: !input.entryUrl });
   const shot = path.join(paths.screenshots, `job${input.jobId}-${Date.now()}.png`);
   let pageRef: Page | null = null;
+  let keepOpen = false;
   try {
     const page = await context.newPage();
     pageRef = page;
@@ -542,7 +546,10 @@ export async function publishToNaver(input: PublishInput): Promise<PublishResult
     if (input.saveDraftOnly) {
       await ed.closeOverlays();
       const saved = await saveDraft(page, frame, log);
-      if (saved.ok) return { status: "draft_saved", screenshot: ss.file, stats: ed.stats, note: `임시저장했습니다(발행하지 않음). ${saved.how}${imgNote}${capNote}` };
+      if (saved.ok) {
+        keepOpen = Boolean(input.keepOpenAfterSave);
+        return { status: "draft_saved", screenshot: ss.file, stats: ed.stats, note: `임시저장했습니다(발행하지 않음). ${saved.how}${imgNote}${capNote}` };
+      }
       return { status: "failed", screenshot: ss.file, stats: ed.stats, note: `글 입력은 끝났지만 임시저장을 확인하지 못했습니다: ${saved.how}` };
     }
     // 8. 연습 모드면 여기서 끝
@@ -593,6 +600,16 @@ export async function publishToNaver(input: PublishInput): Promise<PublishResult
     return { status: "failed", note: "글쓰기 화면에서 오류: " + (e as Error).message.slice(0, 200) };
   } finally {
     if (input.inspect && pageRef) await input.inspect(pageRef).catch((e) => log("검사 실패: " + (e as Error).message, "warn"));
+    if (keepOpen && pageRef && !pageRef.isClosed()) {
+      // 사용자가 글을 바로 확인할 수 있게 창을 열어 둔다. 창(또는 브라우저)을 닫으면 끝난다
+      await pageRef.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
+      log("글쓰기 창을 열어 두었어요. 확인이 끝나면 그 창을 닫아 주세요", "ok");
+      await Promise.race([
+        pageRef.waitForEvent("close", { timeout: 0 }).catch(() => {}),
+        new Promise<void>((r) => browser.on("disconnected", () => r())),
+        sleep(input.keepOpenMaxMs ?? 2 * 60 * 60 * 1000),
+      ]);
+    }
     await browser.close().catch(() => {});
   }
 }

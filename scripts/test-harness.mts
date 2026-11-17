@@ -125,7 +125,9 @@ ok("복원 팝업 없는 경우도 진행", r5.status === "dry_run");
 
 // ---- 5. 임시저장만: 저장되고, 발행 레이어는 절대 열리지 않는다
 let st: Record<string, unknown> = {};
-const r6 = await run("", { saveDraftOnly: true }, async (p) => { st = await p.evaluate(`({ url: location.href, opened: window.__publishOpened || 0, count: document.getElementById('dc').textContent, wrong: window.__countClicks })`); });
+const t6 = Date.now();
+const r6 = await run("", { saveDraftOnly: true, keepOpenAfterSave: true, keepOpenMaxMs: 60000 }, async (p) => { setTimeout(() => p.close().catch(() => {}), 1500); st = await p.evaluate(`({ url: location.href, opened: window.__publishOpened || 0, count: document.getElementById('dc').textContent, wrong: window.__countClicks })`); });
+ok("임시저장 후 창 열어둠 → 사용자가 닫으면 끝남", Date.now() - t6 < 55000);
 ok("임시저장만 → 저장됨 + 발행 안 함", r6.status === "draft_saved" && st.opened === 0 && !/\/post\//.test(String(st.url)) && st.count === "4" && st.wrong === 0, `${r6.note} / ${JSON.stringify(st)}`);
 
 server.close();

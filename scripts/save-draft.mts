@@ -10,7 +10,7 @@ const post = JSON.parse(fs.readFileSync(path.join(dir, "post.json"), "utf8"));
 const images: Record<number, string> = {};
 for (const [k, f] of Object.entries(post.images as Record<string, string>)) images[Number(k)] = path.join(dir, f);
 const say = (m: string) => console.log("\n▶ " + m);
-console.log("\n[ 프로그램 버전 v4 — 인용구 아래 줄 미리 만들기 방식 ]");
+console.log("\n[ 프로그램 버전 v5 — 임시저장 후 창 열어두기 ]");
 
 say("네이버 로그인 상태를 확인하고 있어요 (30초쯤 걸려요)");
 let s = await verifySession();
@@ -22,13 +22,13 @@ if (!s.valid) {
   s = await verifySession();
   if (!s.valid) { say("로그인은 했는데 글쓰기 권한 확인이 안 돼요(" + s.reason + "). '로그인 상태 유지' 를 켜고 다시 해주세요."); process.exit(1); }
 }
-say(`로그인 확인! 블로그(${s.blogId})에 글을 입력할게요.\n  브라우저 창이 열리면 건드리지 말고 지켜만 봐주세요. 3~5분 걸려요.\n  ※ 발행은 하지 않고 임시저장만 합니다.`);
+say(`로그인 확인! 블로그(${s.blogId})에 글을 입력할게요.\n  브라우저 창이 열리면 건드리지 말고 지켜만 봐주세요. 3~5분 걸려요.\n  ※ 발행은 하지 않고 임시저장만 합니다.\n  ※ 저장이 끝나면 창을 그대로 열어 둡니다. 글을 확인한 뒤 그 창을 닫으면 끝나요.`);
 const r = await publishToNaver({
   jobId: 0, title: post.title, sections: post.sections, images, headingAsQuote: post.headingAsQuote ?? true,
-  dryRun: false, saveDraftOnly: true, visibility: "private", headless: false, blogId: s.blogId,
+  dryRun: false, saveDraftOnly: true, keepOpenAfterSave: true, visibility: "private", headless: false, blogId: s.blogId,
   log: (m, l) => console.log(`  ${l === "warn" ? "⚠" : l === "error" ? "✖" : "·"} ${m}`),
 });
-if (r.status === "draft_saved") say("완료! " + r.note + "\n  확인: 네이버 블로그 → 글쓰기 → 위쪽 '임시저장' 숫자를 누르면 이 글이 보여요.");
+if (r.status === "draft_saved") say("완료! " + r.note + "\n  창을 닫으셨으니 끝났어요. 나중에 다시 보려면: 네이버 블로그 → 글쓰기 → 위쪽 '저장' 옆 숫자.");
 else say("임시저장을 끝내지 못했어요: " + r.note);
 if (r.screenshot) console.log("  완성 화면 사진: " + r.screenshot);
 process.exit(r.status === "draft_saved" ? 0 : 1);
