@@ -6,7 +6,7 @@ import { SECTION_FORMAT } from "@/lib/ai/templates";
 import { sanitizeDraft } from "@/lib/ai/content";
 
 const OUT = "post-eyeclear";
-const KW = "루테인지아잔틴"; // ⚠️ 키워드 마스터 수치 미확인(사용자 확인 대기)
+const KW = "루테인"; // 사용자 지정(2026-11-23). ⚠️ 키워드 마스터 수치 미확인
 const URL = "https://search.shopping.naver.com/search/all?query=아이클리어루테인지아잔틴미니캡슐";
 const LINK1 = `👉 네이버쇼핑에서 판매처 비교하기: ${URL}`;
 const LINK2 = `구매처 링크 한 번 더 남겨둘게요 👉 ${URL}`;
@@ -55,7 +55,10 @@ B. ⚠️ 건강기능식품 광고 규칙: 기능성은 포장의 기능정보 
    "침침한 눈", "흐릿한 눈", "희미한 눈", "선명", "시력", "개선", "치료", "예방", "노안", "눈 노화", "피로", "안구건조", "효과" 라는 표현을 쓰지 마라.
    인체적용시험은 포장 안내 그대로 소개하고 "모든 사람에게 동일하게 적용되는 것은 아님" 을 함께 써라. "구매율·섭취율 1위" 는 출처(2018 건강기능식품협회 소비자만족도조사 루테인부문)와 함께 "포장에 표기" 로만.
 C. 글쓴이는 매장에서 보고 포장을 읽어본 사람이다. 먹어본 경험·맛·체감은 지어내지 마라(후기는 다른 분들 이야기로만).
-D. 핵심 키워드 "${KW}": 제목+본문+사진설명 전체에서 제품명 안에 든 것까지 합쳐 정확히 5~9번. 제목 앞부분에 포함. 그 밖에는 "이 제품", "아이클리어", "미니캡슐" 로 불러라. 해시태그에 "${KW}" 쓰지 마라.
+D. 핵심 키워드 "${KW}": "${KW}" 글자는 제목+본문+사진설명+해시태그 전체에서 제품명·"루테인지아잔틴"·"루테인지아잔틴복합추출물"·성분명 안에 든 것까지 모두 합쳐 정확히 6~9번만 나와야 한다(10번 넘으면 키워드 남용).
+   제목 맨 앞에 "${KW}" 를 단독 단어로. 제품의 정식 이름(…루테인지아잔틴 미니캡슐)은 본문 첫 소개 1번만 쓰고, 그 밖에는 "아이클리어 미니캡슐", "이 제품" 으로 불러라.
+   기능정보 문구는 1번만 인용하고, 성분 설명은 "루테인 18.2mg, 지아잔틴 1.8mg" 처럼 필요한 곳에만. 후기 소개·주의사항·해시태그·사진 설명에는 "${KW}" 글자를 쓰지 마라(함량 숫자는 "1캡슐 성분 표시" 로 바꿔 말하라).
+   "항목 : 내용" 정보 줄 끝에는 물결표를 붙이지 마라. "마무리하며" 소제목 뒤에는 다른 소제목을 만들지 마라.
 E. image 섹션 정확히 5개, query 는 "사진1"~"사진5" 그대로 각 1번. 사진 사이 문단 2개 이상, 첫 사진 앞 문단 2개 이상.
    사진 내용: ${Object.entries(PHOTOS).map(([k, v]) => `${k}=${v.desc}`).join(" / ")}. 내용에 맞는 구획에 두고 caption 을 달아라.
 F. 다음 두 문단을 글자 그대로: ① 5번 구획 끝 "${LINK1}" ② 마무리 마지막 안내 문단 바로 앞 "${LINK2}"
@@ -73,7 +76,7 @@ function check(d: Draft) {
   const imgs = d.sections.map((s, i) => (s.type === "image" ? i : -1)).filter((i) => i >= 0);
   const qs = d.sections.filter((s) => s.type === "image").map((s) => (s as { query: string }).query.trim());
   if (chars < 1200) p.push(`본문 ${chars}자`);
-  if (kw < 3 || kw > 10) p.push(`"${KW}" ${kw}회(3~10회여야 함)`);
+  if (kw < 3 || kw > 10) p.push(`"${KW}" ${kw}회(3~10회여야 함 — 제품명·루테인지아잔틴 안의 것까지 셈)`);
   if (!d.title.includes(KW)) p.push("제목에 키워드 없음");
   if (imgs.length !== 5 || new Set(qs).size !== 5 || !qs.every((q) => q in PHOTOS)) p.push(`사진 query 오류 ${JSON.stringify(qs)}`);
   if (imgs[0] < 2 || imgs.slice(1).some((v, i) => v - imgs[i] < 3)) p.push("사진 간격 부족");
@@ -83,6 +86,10 @@ function check(d: Draft) {
   const ban = all.match(/침침|흐릿|희미|선명|시력|개선|치료하|예방하|노안|눈 노화|눈노화|피로|안구건조|효과|효능/g);
   if (ban) p.push("금지 표현: " + [...new Set(ban)].join(","));
   if (!/모든 사람에게 동일하게 적용되는 것은 아/.test(all)) p.push("인체적용시험 단서 누락");
+  if (!d.title.trimStart().startsWith(KW)) p.push("제목이 키워드로 시작하지 않음");
+  const hs = d.sections.map((s, i) => ((s.type === "heading" || s.type === "quote") && /마무리/.test((s as { text: string }).text) ? i : -1)).filter((i) => i >= 0);
+  if (hs.length && d.sections.slice(hs[0] + 1).some((s) => s.type === "heading" || s.type === "quote")) p.push("마무리 뒤에 소제목이 있음");
+  if (d.sections.some((s) => s.type === "paragraph" && /^[^:]{1,10} : .*～$/.test(s.text))) p.push("정보 줄 끝에 물결표");
   return { chars, kw, imgs, p };
 }
 
