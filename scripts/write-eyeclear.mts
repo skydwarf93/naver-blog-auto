@@ -81,7 +81,7 @@ function check(d: Draft) {
   if (imgs.length !== 5 || new Set(qs).size !== 5 || !qs.every((q) => q in PHOTOS)) p.push(`사진 query 오류 ${JSON.stringify(qs)}`);
   if (imgs[0] < 2 || imgs.slice(1).some((v, i) => v - imgs[i] < 3)) p.push("사진 간격 부족");
   const color = all.match(/분홍|핑크|파랑|파란|보라|퍼플|남색/g); if (color) p.push("색깔 표현: " + [...new Set(color)].join(","));
-  const bl = (all.match(/블로거 [a-z0-9_]{4} 님/g) ?? []).length; if (bl < 10) p.push(`후기 소개 ${bl}명`);
+  const bl = (all.match(/블로거 [a-z0-9_-]{4} 님/g) ?? []).length; if (bl < 10) p.push(`후기 소개 ${bl}명`);
   if (!all.includes(LINK1) || !all.includes(LINK2)) p.push("링크 문단 누락");
   const ban = all.match(/침침|흐릿|희미|선명|시력|개선|치료하|예방하|노안|눈 노화|눈노화|피로|안구건조|효과|효능/g);
   if (ban) p.push("금지 표현: " + [...new Set(ban)].join(","));
