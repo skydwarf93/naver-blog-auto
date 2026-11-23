@@ -35,6 +35,12 @@ npm run save-draft
 ```
 처음이면 네이버 로그인 창이 뜹니다. "로그인 상태 유지"를 켜고 로그인하세요.
 
+## 매일 쓰기 한 줄 명령 (윈도우 PowerShell)
+받은 `post-날짜-이름.zip` 을 내려받은 뒤, PowerShell 에 붙여넣으세요. 가장 최근 글 묶음을 앱 폴더에 풀고 바로 임시저장합니다(발행 안 함).
+```bash
+$z = Get-ChildItem "$HOME" -Recurse -Depth 4 -Filter "post-*.zip" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $z) { "글 묶음(post-...zip)을 못 찾았어요" } else { $app = "$HOME\OneDrive\바탕 화면\naver-blog-auto"; $n = $z.BaseName -replace ' ?\(\d+\)$',''; Expand-Archive -Path $z.FullName -DestinationPath $app -Force; cd $app; "이번 글: $n"; npm.cmd run save-draft -- $n }
+```
+
 ## 안전장치 (반드시 읽기)
 
 - **자동 발행은 네이버 이용약관상 계정 제재 위험이 있습니다.**
