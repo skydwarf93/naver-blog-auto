@@ -1,6 +1,6 @@
 # CapCut으로 만들기 (무료 기능만 사용)
 
-완성본: `myoinositol_capcut_final.mp4` (9:16, 33초, 자막·음성·배경음악 포함).
+완성본: `myoinositol_capcut_final.mp4` (9:16, 35초, 정보 자막 + 음성 자막 + 음성 + 배경음악).
 아래는 같은 영상을 CapCut에서 더 좋은 음성으로 다시 만드는 방법입니다.
 
 ## 준비물 (이 폴더)
@@ -9,7 +9,7 @@
 | `../01_front.mp4` ~ `../05_ending.mp4` | 자막 없는 장면 영상 |
 | `subtitles.srt` | 자막 (시간 맞춤) |
 | `narration_script.txt` | 음성으로 읽을 문장 8개 |
-| `narration.wav` | 미리 만든 음성 (임시 품질) |
+| `narration.wav` | 미리 만든 음성 (Supertonic 2 한국어 음성) |
 | `bgm.wav` | 직접 합성한 배경음악 (저작권 걱정 없음) |
 
 ## 순서
