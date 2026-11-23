@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { newContext } from "@/lib/playwright";
+import { naverContext } from "@/lib/playwright";
 import { paths } from "@/lib/paths";
 import { NAVER } from "@/lib/scrape/selectors";
 
@@ -9,12 +9,12 @@ let loginInFlight = false;
 export async function loginInteractive(): Promise<{ ok: boolean; message: string }> {
   if (loginInFlight) return { ok: false, message: "이미 로그인 창이 열려 있습니다" };
   loginInFlight = true;
-  let browser: Awaited<ReturnType<typeof newContext>>["browser"] | null = null;
+  let browser: Awaited<ReturnType<typeof naverContext>>["browser"] | null = null;
   try {
-    const opened = await newContext({ headless: false });
+    const opened = await naverContext(false);
     browser = opened.browser;
     const context = opened.context;
-    const page = await context.newPage();
+    const page = context.pages()[0] ?? (await context.newPage());
     await page.goto(NAVER.loginUrl);
     const deadline = Date.now() + 5 * 60 * 1000;
     while (Date.now() < deadline) {
@@ -53,13 +53,14 @@ export function invalidateSessionCache() { cache = null; }
 
 export function logout() {
   try { fs.unlinkSync(paths.session); } catch { /* 없음 */ }
+  try { fs.rmSync(paths.naverProfile, { recursive: true, force: true }); } catch { /* 없음 */ }
   invalidateSessionCache();
 }
 
 export async function verifySession(): Promise<SessionStatus> {
   if (cache && Date.now() - cache.checkedAt < TTL) return cache;
   if (!fs.existsSync(paths.session)) return (cache = { valid: false, reason: "로그인 기록 없음", checkedAt: Date.now() });
-  const { browser, context } = await newContext({ headless: true, useNaverSession: true });
+  const { browser, context } = await naverContext(true);
   try {
     const page = await context.newPage();
     // ⚠️ 7-9: naver.com 의 nidlogin 링크는 로그인 상태에서도 남아 있다 → 튕기는지로 판정

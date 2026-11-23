@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { Frame, Locator, Page } from "playwright";
-import { newContext } from "@/lib/playwright";
+import { naverContext, newContext } from "@/lib/playwright";
 import { getDb } from "@/lib/db";
 import { paths } from "@/lib/paths";
 import { EDITOR, NAVER } from "@/lib/scrape/selectors";
@@ -452,7 +452,8 @@ async function getEditorFrame(page: Page): Promise<Frame> {
 export async function publishToNaver(input: PublishInput): Promise<PublishResult> {
   const { log } = input;
   if (!input.entryUrl && !input.blogId) return { status: "failed", note: "블로그 주소를 알 수 없습니다(네이버 로그인 필요)" };
-  const { browser, context } = await newContext({ headless: input.headless, useNaverSession: !input.entryUrl });
+  // 실제 네이버는 같은 브라우저 기록(프로필)으로, 하네스는 빈 브라우저로
+  const { browser, context } = input.entryUrl ? await newContext({ headless: input.headless }) : await naverContext(input.headless);
   const shot = path.join(paths.screenshots, `job${input.jobId}-${Date.now()}.png`);
   let pageRef: Page | null = null;
   let keepOpen = false;

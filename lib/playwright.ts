@@ -42,3 +42,37 @@ export async function newContext(opts: { headless: boolean; useNaverSession?: bo
   });
   return { browser, context };
 }
+
+/**
+ * 네이버 전용: 같은 브라우저 기록(프로필)을 계속 쓴다.
+ * 실측(사용자 PC): 매번 빈 브라우저로 로그인하면 네이버가 새 기기로 판단해 비밀번호 변경을 반복 요구했다.
+ * 프로필을 유지하면 기기 정보와 쿠키가 남는다. 이전 방식의 저장 쿠키(naver-session.json)도 시작할 때 다시 넣어 준다.
+ * 한 번에 하나만 열 수 있다(프로필 잠금) — 로그인·확인·입력은 차례로만 쓴다.
+ */
+export async function naverContext(headless: boolean): Promise<{ browser: Browser; context: BrowserContext }> {
+  fs.mkdirSync(paths.naverProfile, { recursive: true });
+  const opts = { headless, viewport: { width: 1366, height: 900 }, locale: "ko-KR", userAgent: UA, args: ["--lang=ko-KR"] };
+  let context: BrowserContext;
+  try {
+    context = await chromium.launchPersistentContext(paths.naverProfile, opts);
+  } catch (e) {
+    if (!/Executable doesn'?t exist|please run|install/i.test(String((e as Error).message))) throw e;
+    await installChromium();
+    context = await chromium.launchPersistentContext(paths.naverProfile, opts);
+  }
+  if (fs.existsSync(paths.session)) {
+    try {
+      const saved = JSON.parse(fs.readFileSync(paths.session, "utf8")) as { cookies?: Parameters<BrowserContext["addCookies"]>[0] };
+      const now = Date.now() / 1000;
+      const have = new Set((await context.cookies()).map((c) => `${c.name}@${c.domain}`));
+      const restore = (saved.cookies ?? []).filter((c) => !have.has(`${c.name}@${c.domain}`) && (c.expires === -1 || (c.expires ?? -1) > now));
+      if (restore.length) await context.addCookies(restore);
+    } catch { /* 저장 쿠키가 깨졌으면 무시 */ }
+  }
+  // 기존 코드가 browser.close()/on("disconnected") 를 쓰므로 같은 모양으로 감싼다
+  const browserLike = {
+    close: () => context.close(),
+    on: (ev: string, cb: () => void) => { if (ev === "disconnected") context.on("close", cb); return browserLike; },
+  } as unknown as Browser;
+  return { browser: browserLike, context };
+}

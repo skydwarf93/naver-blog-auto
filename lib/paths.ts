@@ -6,6 +6,8 @@ export const paths = {
   root: dataRoot,
   db: path.join(dataRoot, "app.db"),
   session: path.join(dataRoot, "naver-session.json"),
+  // 네이버용 브라우저 기록(쿠키·기기 정보). 매번 새 브라우저를 열면 네이버가 "처음 보는 기기"로 보고 보안 확인·비밀번호 변경을 요구한다
+  naverProfile: path.join(dataRoot, "naver-profile"),
   images: path.join(dataRoot, "images"),
   screenshots: path.join(dataRoot, "screenshots"),
 };
