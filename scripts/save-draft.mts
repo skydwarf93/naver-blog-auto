@@ -5,12 +5,14 @@ import path from "node:path";
 import { loginInteractive, verifySession, invalidateSessionCache } from "@/lib/naver/session";
 import { publishToNaver } from "@/lib/naver/publish";
 
-const dir = path.resolve("post");
+// 사용법: npm run save-draft -- post-eyeclear  (폴더를 안 주면 post)
+const dir = path.resolve(process.argv[2] || "post");
 const post = JSON.parse(fs.readFileSync(path.join(dir, "post.json"), "utf8"));
 const images: Record<number, string> = {};
 for (const [k, f] of Object.entries(post.images as Record<string, string>)) images[Number(k)] = path.join(dir, f);
 const say = (m: string) => console.log("\n▶ " + m);
-console.log("\n[ 프로그램 버전 v7 — 정보형 원고로 다시 작성 ]");
+console.log("\n[ 프로그램 버전 v8 — 글 폴더 고르기(post / post-eyeclear) ]");
+console.log("  이번에 넣을 글 폴더: " + (process.argv[2] || "post"));
 
 say("네이버 로그인 상태를 확인하고 있어요 (30초쯤 걸려요)");
 let s = await verifySession();
