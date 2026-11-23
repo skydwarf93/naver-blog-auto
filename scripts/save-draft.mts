@@ -11,7 +11,8 @@ const post = JSON.parse(fs.readFileSync(path.join(dir, "post.json"), "utf8"));
 const images: Record<number, string> = {};
 for (const [k, f] of Object.entries(post.images as Record<string, string>)) images[Number(k)] = path.join(dir, f);
 const say = (m: string) => console.log("\n▶ " + m);
-console.log("\n[ 프로그램 버전 v10 — 네이버 로그인 기억하기 ]");
+console.log("  이번에 넣을 글 제목: " + post.title);
+console.log("\n[ 프로그램 버전 v11 — 글 제목 표시 ]");
 console.log("  이번에 넣을 글 폴더: " + (process.argv[2] || "post"));
 
 say("네이버 로그인 상태를 확인하고 있어요 (30초쯤 걸려요)");
