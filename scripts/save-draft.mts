@@ -10,7 +10,7 @@ const post = JSON.parse(fs.readFileSync(path.join(dir, "post.json"), "utf8"));
 const images: Record<number, string> = {};
 for (const [k, f] of Object.entries(post.images as Record<string, string>)) images[Number(k)] = path.join(dir, f);
 const say = (m: string) => console.log("\n▶ " + m);
-console.log("\n[ 프로그램 버전 v7 — 정보형 원고로 다시 작성 ]");
+console.log("\n[ 프로그램 버전 v8 — 아이클리어 루테인지아잔틴 미니캡슐 글 ]");
 
 say("네이버 로그인 상태를 확인하고 있어요 (30초쯤 걸려요)");
 let s = await verifySession();
