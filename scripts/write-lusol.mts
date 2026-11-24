@@ -5,8 +5,8 @@ import { DraftBaseSchema, type Draft } from "@/lib/types";
 import { SECTION_FORMAT } from "@/lib/ai/templates";
 import { sanitizeDraft } from "@/lib/ai/content";
 
-const OUT = "post-20261124-lusol";
-const KW = "배도라지즙"; // ⚠️ 사용자 미지정 — 임시. 키워드 마스터 수치 미확인
+const OUT = "post-20261124-lusol2";
+const KW = "루솔 배도라지즙"; // 사용자 지정(2026-11-24). 띄어쓰기 포함 그대로 센다. ⚠️ 키워드 마스터 수치 미확인
 const URL = "https://search.shopping.naver.com/search/all?query=루솔진한배도라지즙비타플러스";
 const LINK1 = `👉 네이버쇼핑에서 판매처 비교하기: ${URL}`;
 const LINK2 = `구매처 링크 한 번 더 남겨둘게요 👉 ${URL}`;
@@ -49,8 +49,8 @@ C. 원고에서 고칠 것: 판매처 리뷰 퍼센트(SSG 76% 등)·'제조사 
    비타민 3번 구획은 각 비타민의 이름·원재료명 표기·1개입 함량·기준치 비율만 말하고 기능 설명은 하지 마라. 마지막에 "건강기능식품이 아니라 음료" 라는 원고의 안내는 살려라.
 D. 5번 구획: 위 후기 10개를 맛 / 포장과 휴대 / 구성과 구매처 / 가족이 함께 / 고른 이유 포인트로 나눠 "블로거 ○○ 님은 ~라고 하시더라구요" 식으로 모두 한 번씩(표기 그대로). 포인트 이름은 소제목이 아니라 문단 앞 "① 맛 :" 처럼 붙여라.
    그 뒤에 원고의 "구매 전 확인할 점" 을 포장 주의 문구 기반으로.
-E. 핵심 키워드 "${KW}": 제목+본문+해시태그 전체에서 제품명 안에 든 것까지 합쳐 정확히 5~9번. 제목 맨 앞에 "${KW}". 제품 정식 이름은 첫 소개 포함 최대 3번만, 그 외엔 "이 제품", "루솔 제품", "비타플러스" 로.
-   해시태그는 원고 것을 쓰되 "${KW}" 가 들어간 태그는 1개만 남겨라.
+E. 핵심 키워드 "${KW}"(띄어쓰기 포함, 글자 그대로): 제목+본문 전체에서 정확히 5~8번. 제목은 "${KW}" 로 시작. 서론·각 구획·마무리에 자연스럽게 나눠 넣어라(한 문단에 2번 이상 금지).
+   제품 정식 이름 "루솔 진한 배도라지즙 비타플러스" 는 첫 소개 1번만, 그 외엔 "이 제품", "비타플러스" 로. 해시태그는 원고 것 그대로 둬도 된다.
 F. image 섹션 정확히 5개, query 는 "사진1"~"사진5" 그대로 각 1번, ⚠️ caption 은 넣지 마라(사용자 요청: 사진에 글 없음). 사진 사이 문단 2개 이상, 첫 사진 앞 문단 2개 이상.
    사진 내용: ${Object.entries(PHOTOS).map(([k, v]) => `${k}=${v.desc}`).join(" / ")}. 내용에 맞는 구획에 둬라.
 G. 다음 두 문단을 글자 그대로: ① 5번 구획 끝 "${LINK1}" ② 마무리의 마지막 문단(해시태그 바로 앞 안내) 바로 앞 "${LINK2}". "마무리" 소제목 뒤에는 다른 소제목을 만들지 마라.
@@ -77,7 +77,7 @@ function check(d: Draft) {
   const ban = all.match(/소비기한|유통기한|2027|기관지|감기|기침|콧물|비염|면역|효과|효능|치료|예방|에너지 생성|대사|SSG|76%|중탕|하루에 한 포|하루 한 포|목이 |목 건강|칼칼/g);
   if (ban) p.push("금지 표현: " + [...new Set(ban)].join(","));
   if (d.sections.some((s) => s.type === "image" && s.caption && String(s.caption).trim())) p.push("사진 설명(caption)이 있음");
-  if ((all.match(/#[^\s#]*배도라지즙/g) ?? []).length > 1) p.push("키워드 해시태그 2개 이상");
+  if ((all.match(/루솔 진한 배도라지즙 비타플러스/g) ?? []).length > 2) p.push("제품 정식 이름이 너무 많음");
   if (!d.title.trimStart().startsWith(KW)) p.push("제목이 키워드로 시작하지 않음");
   const hs = d.sections.map((s, i) => ((s.type === "heading" || s.type === "quote") && /마무리/.test((s as { text: string }).text) ? i : -1)).filter((i) => i >= 0);
   if (hs.length && d.sections.slice(hs[0] + 1).some((s) => s.type === "heading" || s.type === "quote")) p.push("마무리 뒤에 소제목이 있음");
